@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
+  YAxis,
 } from "recharts";
 import Divider from "./system/Divider";
 import { buildActivitySeries } from "@/lib/analytics";
@@ -62,7 +63,22 @@ export default function StatusView({ data }: { data: DashboardData }) {
         </div>
 
         <div className="boot-section" style={next()}>
-          <Divider label="activity" right="14d" />
+          <Divider
+            label="activity"
+            right={
+              <span className="flex items-center gap-4">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-px w-3 bg-edge" aria-hidden />
+                  attempted
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-px w-3 bg-bad" aria-hidden />
+                  review
+                </span>
+                <span>14d</span>
+              </span>
+            }
+          />
           <Activity submissions={data.recentSubmissions} />
         </div>
       </div>
@@ -102,7 +118,7 @@ function Identity({
               height="94"
               viewBox="0 0 94 94"
               aria-hidden
-              className="pointer-events-none absolute -left-5 -top-4"
+              className="pointer-events-none absolute -left-3 -top-3"
             >
               <path
                 d="M 47 8 A 39 39 0 1 0 86 47"
@@ -344,18 +360,30 @@ function Activity({ submissions }: { submissions: DashboardData["recentSubmissio
       <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={series} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
             <defs>
-              <linearGradient id="actFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--v-edge)" stopOpacity={0.35} />
+              <linearGradient id="actFillEdge" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--v-edge)" stopOpacity={0.3} />
                 <stop offset="100%" stopColor="var(--v-edge)" stopOpacity={0} />
               </linearGradient>
+              <linearGradient id="actFillBad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="var(--v-bad)" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="var(--v-bad)" stopOpacity={0} />
+              </linearGradient>
             </defs>
-            {/* Chart chrome stripped: no grid, no axis lines, no boxed tooltip. */}
+            {/* Chart chrome stripped: no grid, no axis lines, no boxed tooltip — but the
+                y-axis keeps its tick numbers, since an unlabeled scale is not a scale. */}
             <XAxis
               dataKey="label"
               tickLine={false}
               axisLine={false}
               tick={{ fill: "rgb(var(--v-light) / var(--a-tertiary))", fontSize: 10 }}
               interval={2}
+            />
+            <YAxis
+              allowDecimals={false}
+              tickLine={false}
+              axisLine={false}
+              width={22}
+              tick={{ fill: "rgb(var(--v-light) / var(--a-tertiary))", fontSize: 10 }}
             />
             <Tooltip
               cursor={{ stroke: "var(--v-edge)", strokeOpacity: 0.4 }}
@@ -366,14 +394,21 @@ function Activity({ submissions }: { submissions: DashboardData["recentSubmissio
                 fontSize: 11,
                 color: "rgb(var(--v-light) / var(--a-primary))",
               }}
-              formatter={(v) => [`${v}`, "attempts"]}
+              formatter={(v, name) => [`${v}`, name === "attempted" ? "attempted" : "review"]}
             />
             <Area
               type="monotone"
-              dataKey="submissions"
+              dataKey="attempted"
               stroke="var(--v-edge)"
               strokeWidth={1.5}
-              fill="url(#actFill)"
+              fill="url(#actFillEdge)"
+            />
+            <Area
+              type="monotone"
+              dataKey="reviewed"
+              stroke="var(--v-bad)"
+              strokeWidth={1.5}
+              fill="url(#actFillBad)"
             />
           </AreaChart>
       </ResponsiveContainer>

@@ -217,6 +217,7 @@ model Submission {
   memory       String?
   timeSpentMin Int?
   isFirstClear Boolean          @default(false)
+  isReview     Boolean          @default(false)
   submittedAt  DateTime         @default(now())
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)

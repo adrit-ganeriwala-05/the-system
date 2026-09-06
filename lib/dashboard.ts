@@ -36,7 +36,7 @@ export async function getDashboardData(userId: string) {
       where: { userId },
       orderBy: { submittedAt: "desc" },
       take: 200,
-      select: { submittedAt: true, status: true },
+      select: { submittedAt: true, status: true, isReview: true },
     }),
   ]);
 

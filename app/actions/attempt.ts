@@ -60,6 +60,7 @@ export async function logAttempt(input: LogAttemptInput): Promise<LogAttemptResu
         memory: input.memory,
         timeSpentMin: input.timeSpentMin,
         isFirstClear,
+        isReview,
         submittedAt: input.submittedAt ? new Date(input.submittedAt) : undefined,
       },
     });
