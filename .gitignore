@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# .env.example is a template with no real values and must be tracked.
+!.env.example

@@ -1,0 +1,291 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Enums ----------
+
+enum Rank {
+  E
+  D
+  C
+  B
+  A
+  S
+}
+
+enum Pattern {
+  ARRAYS_HASHING
+  TWO_POINTERS
+  SLIDING_WINDOW
+  STACK
+  BINARY_SEARCH
+  LINKED_LIST
+  TREES
+  TRIES
+  HEAP_PRIORITY_QUEUE
+  BACKTRACKING
+  GRAPHS
+  ADVANCED_GRAPHS
+  DP_1D
+  DP_2D
+  GREEDY
+  INTERVALS
+  MATH_GEOMETRY
+  BIT_MANIPULATION
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum SubmissionStatus {
+  ACCEPTED
+  WRONG_ANSWER
+  TLE
+}
+
+enum CommitmentTrack {
+  CASUAL
+  STANDARD
+  INTENSE
+  CUSTOM
+}
+
+enum GroupRole {
+  OWNER
+  MEMBER
+}
+
+enum ThemePreference {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
+// ---------- Auth.js (Prisma adapter shape) ----------
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------- Core ----------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+
+  // Progression. `rank` is intentionally absent: it is derived from the share of the
+  // active set solved, so it would go stale the moment the user switches sets.
+  level         Int     @default(1)
+  totalExp      Int     @default(0)
+  currentStreak Int     @default(0)
+  longestStreak Int     @default(0)
+  activeTitle   String?
+
+  activeProblemSetId String?
+  activeProblemSet   ProblemSet? @relation(fields: [activeProblemSetId], references: [id])
+
+  themePreference       ThemePreference @default(SYSTEM)
+  hasCompletedOnboarding Boolean        @default(false)
+  commitmentTrack       CommitmentTrack @default(STANDARD)
+  customNewTarget     Int?
+  customReviewTarget  Int?
+  streakFreezesRemaining Int      @default(1)
+  streakFreezeResetAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  progress     UserProblemProgress[]
+  submissions  Submission[]
+  dailyQuests  DailyQuest[]
+  achievements Achievement[]
+  ownedGroups  Group[]               @relation("GroupOwner")
+  memberships  GroupMembership[]
+
+  @@index([totalExp])
+}
+
+model Problem {
+  id          String     @id @default(cuid())
+  title       String
+  slug        String     @unique
+  leetcodeUrl String
+  pattern     Pattern
+  difficulty  Difficulty
+
+  setItems    ProblemSetItem[]
+  progress    UserProblemProgress[]
+  submissions Submission[]
+
+  @@index([pattern])
+}
+
+model ProblemSet {
+  id          String @id @default(cuid())
+  key         String @unique // pareto49 | blind75 | neetcode150
+  name        String
+  description String
+  totalCount  Int    @default(0)
+
+  items       ProblemSetItem[]
+  activeUsers User[]
+}
+
+model ProblemSetItem {
+  id           String @id @default(cuid())
+  problemId    String
+  problemSetId String
+  orderIndex   Int
+
+  problem    Problem    @relation(fields: [problemId], references: [id], onDelete: Cascade)
+  problemSet ProblemSet @relation(fields: [problemSetId], references: [id], onDelete: Cascade)
+
+  @@unique([problemSetId, problemId])
+  @@index([problemSetId, orderIndex])
+}
+
+model UserProblemProgress {
+  id             String    @id @default(cuid())
+  userId         String
+  problemId      String
+  solved         Boolean   @default(false)
+  firstClearedAt DateTime?
+  submissionCount Int      @default(0)
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, problemId])
+  @@index([userId, solved])
+}
+
+model Submission {
+  id           String           @id @default(cuid())
+  userId       String
+  problemId    String
+  status       SubmissionStatus
+  notes        String?
+  runtime      String?
+  memory       String?
+  timeSpentMin Int?
+  isFirstClear Boolean          @default(false)
+  submittedAt  DateTime         @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@index([userId, submittedAt])
+  @@index([userId, isFirstClear, submittedAt])
+  @@index([problemId])
+}
+
+model DailyQuest {
+  id                 String   @id @default(cuid())
+  userId             String
+  date               DateTime
+  targetNewSolves    Int
+  targetReviews      Int
+  completedNewSolves Int      @default(0)
+  completedReviews   Int      @default(0)
+  isCompleted        Boolean  @default(false)
+  isPenalty          Boolean  @default(false)
+  penaltyReason      String?
+  freezeUsed         Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model Achievement {
+  id         String   @id @default(cuid())
+  userId     String
+  patternKey Pattern
+  title      String
+  unlockedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, patternKey])
+}
+
+// ---------- Groups ----------
+
+model Group {
+  id         String   @id @default(cuid())
+  name       String
+  ownerId    String
+  inviteCode String   @unique
+  memberCap  Int      @default(20)
+  createdAt  DateTime @default(now())
+
+  owner   User              @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members GroupMembership[]
+
+  @@index([ownerId])
+}
+
+model GroupMembership {
+  id       String    @id @default(cuid())
+  userId   String
+  groupId  String
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@index([groupId])
+}
