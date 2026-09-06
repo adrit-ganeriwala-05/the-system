@@ -31,8 +31,8 @@ export default function CalendarView({ data }: { data: CalendarMonth }) {
     .find((d) => d.key === selectedKey);
 
   return (
-    <div className="mt-5">
-      <div className="flex items-center justify-between">
+    <div className="mt-5 flex min-h-0 flex-1 flex-col">
+      <div className="flex shrink-0 items-center justify-between">
         <Link
           href={`/calendar?y=${prev.year}&m=${prev.month}`}
           className="p-1 ink-3 transition-opacity duration-150 hover:opacity-100"
@@ -50,40 +50,52 @@ export default function CalendarView({ data }: { data: CalendarMonth }) {
         </Link>
       </div>
 
-      <div className="mt-4 grid grid-cols-7 gap-px">
+      <div className="mt-4 grid shrink-0 grid-cols-7">
         {WEEKDAY_LABELS.map((w) => (
           <div key={w} className="figure pb-2 text-center text-[11px] ink-3">
             {w}
           </div>
         ))}
+      </div>
 
+      <div
+        className="grid min-h-0 flex-1 grid-cols-7 border-l border-t border-hair"
+        style={{ gridTemplateRows: `repeat(${data.weeks.length}, 1fr)` }}
+      >
         {data.weeks.flat().map((day) => {
           const active = day.key === selectedKey;
-          const shown = day.entries.slice(0, 4);
+          const shown = day.entries.slice(0, 6);
           const overflow = day.entries.length - shown.length;
           return (
             <button
               key={day.key}
               onClick={() => setSelectedKey(active ? null : day.key)}
               disabled={day.entries.length === 0}
-              className={`flex min-h-16 flex-col items-start gap-1 border-t border-hair p-1.5 text-left transition-opacity duration-150 sm:min-h-20 sm:p-2 ${
+              className={`flex min-h-0 flex-col items-start gap-1.5 border-b border-r border-hair p-2 text-left transition-opacity duration-150 sm:p-3 ${
                 day.inMonth ? "" : "opacity-30"
               } ${active ? "bg-edge/10" : ""} ${day.entries.length === 0 ? "cursor-default" : "cursor-pointer hover:opacity-90"}`}
               style={active ? { boxShadow: "inset 0 0 0 1px var(--v-edge)" } : undefined}
             >
-              <span
-                className={`figure text-[12px] ${day.isToday ? "text-edge" : day.inMonth ? "ink-2" : "ink-3"}`}
-              >
-                {day.dayOfMonth}
-              </span>
+              {day.isToday ? (
+                <span
+                  className="figure flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] text-edge edge-glow"
+                  style={{ boxShadow: "inset 0 0 0 1.5px var(--v-edge)" }}
+                >
+                  {day.dayOfMonth}
+                </span>
+              ) : (
+                <span className={`figure text-[12px] ${day.inMonth ? "ink-2" : "ink-3"}`}>
+                  {day.dayOfMonth}
+                </span>
+              )}
               {day.entries.length > 0 && (
-                <span className="flex flex-wrap items-center gap-0.5" aria-hidden>
+                <span className="flex flex-wrap items-center gap-1" aria-hidden>
                   {shown.map((e) => (
-                    <span key={e.submissionId} className={`text-[10px] ${DIFF_DOT[e.difficulty]}`}>
+                    <span key={e.submissionId} className={`text-[11px] ${DIFF_DOT[e.difficulty]}`}>
                       ●
                     </span>
                   ))}
-                  {overflow > 0 && <span className="figure text-[9px] ink-3">+{overflow}</span>}
+                  {overflow > 0 && <span className="figure text-[10px] ink-3">+{overflow}</span>}
                 </span>
               )}
             </button>
@@ -99,7 +111,7 @@ export default function CalendarView({ data }: { data: CalendarMonth }) {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.18 }}
-            className="mt-2 overflow-hidden border-t border-hair"
+            className="shrink-0 overflow-hidden border-t border-hair"
           >
             <div className="pt-4">
               <p className="label mb-3">{selectedDay.key}</p>

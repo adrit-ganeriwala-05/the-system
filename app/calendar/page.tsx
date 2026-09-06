@@ -20,8 +20,8 @@ export default async function CalendarPage({
   const data = await getCalendarMonth(userId, year, month);
 
   return (
-    <div className="px-5 pb-8 pt-6 sm:px-7">
-      <div className="boot-section" style={{ ["--i" as string]: 0 }}>
+    <div className="flex min-h-0 flex-1 flex-col px-5 pb-8 pt-6 sm:px-7">
+      <div className="boot-section flex min-h-0 flex-1 flex-col" style={{ ["--i" as string]: 0 }}>
         <Divider label="calendar" right="attempt log" />
         <CalendarView data={data} />
       </div>
