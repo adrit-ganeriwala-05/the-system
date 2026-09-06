@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ExternalLink } from "lucide-react";
 import type { Difficulty, Pattern, SubmissionStatus } from "@prisma/client";
 import Divider from "./system/Divider";
 import { logAttempt, type LogAttemptResult } from "@/app/actions/attempt";
@@ -253,42 +254,55 @@ function ManifestRow({
       className="border-b"
       style={hair}
     >
-      <button
-        onClick={onToggle}
-        aria-expanded={open}
-        className="group flex w-full items-baseline gap-4 py-2 text-left"
-      >
-        <span className="figure w-9 shrink-0 text-[11px] ink-3">
-          {String(problem.orderIndex).padStart(3, "0")}
-        </span>
-        <span
-          className={`w-3 shrink-0 text-center text-[11px] ${DIFF_DOT[problem.difficulty]}`}
-          title={DIFF_TITLE[problem.difficulty]}
+      <div className="group flex w-full items-baseline gap-4 py-2">
+        <button
+          onClick={onToggle}
+          aria-expanded={open}
+          className="flex min-w-0 flex-1 items-baseline gap-4 text-left"
         >
-          <span className="sr-only">{DIFF_TITLE[problem.difficulty]}</span>
-          <span aria-hidden>●</span>
-        </span>
-        <span
-          className={`flex-1 truncate text-[14px] lowercase transition-opacity duration-150 ${
-            problem.status === "CLEARED" ? "ink-3" : "ink group-hover:opacity-100"
-          }`}
+          <span className="figure w-9 shrink-0 text-[11px] ink-3">
+            {String(problem.orderIndex).padStart(3, "0")}
+          </span>
+          <span
+            className={`w-3 shrink-0 text-center text-[11px] ${DIFF_DOT[problem.difficulty]}`}
+            title={DIFF_TITLE[problem.difficulty]}
+          >
+            <span className="sr-only">{DIFF_TITLE[problem.difficulty]}</span>
+            <span aria-hidden>●</span>
+          </span>
+          <span
+            className={`flex-1 truncate text-[14px] lowercase transition-opacity duration-150 ${
+              problem.status === "CLEARED" ? "ink-3" : "ink group-hover:opacity-100"
+            }`}
+          >
+            {problem.title.toLowerCase()}
+          </span>
+          <span className="figure w-8 shrink-0 text-right text-[11px] ink-3">
+            {problem.submissionCount || ""}
+          </span>
+          {/* Monochrome: green/red stay reserved for attempt outcomes, so a board full
+              of solved rows does not dilute what those two hues mean. */}
+          <span
+            className={`figure w-4 shrink-0 text-center text-[12px] ${
+              problem.status === "CLEARED" ? "ink" : "ink-3"
+            }`}
+            title={problem.status.toLowerCase()}
+          >
+            {STATUS_GLYPH[problem.status]}
+          </span>
+        </button>
+        <a
+          href={problem.leetcodeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          aria-label={`Open ${problem.title} on LeetCode`}
+          title="open on leetcode"
+          className="shrink-0 p-1 ink-3 opacity-0 transition-opacity duration-150 group-hover:opacity-100 hover:text-edge focus-visible:opacity-100"
         >
-          {problem.title.toLowerCase()}
-        </span>
-        <span className="figure w-8 shrink-0 text-right text-[11px] ink-3">
-          {problem.submissionCount || ""}
-        </span>
-        {/* Monochrome: green/red stay reserved for attempt outcomes, so a board full
-            of solved rows does not dilute what those two hues mean. */}
-        <span
-          className={`figure w-4 shrink-0 text-center text-[12px] ${
-            problem.status === "CLEARED" ? "ink" : "ink-3"
-          }`}
-          title={problem.status.toLowerCase()}
-        >
-          {STATUS_GLYPH[problem.status]}
-        </span>
-      </button>
+          <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      </div>
 
       <AnimatePresence initial={false}>
         {open && (
