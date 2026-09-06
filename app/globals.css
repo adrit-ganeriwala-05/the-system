@@ -1,26 +1,340 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * THE HOLOGRAPHIC STATUS PANE — design tokens.
+ *
+ * One continuous pane projected into a void. Near-monochrome: a single light temperature
+ * composed at varying alpha does all the hierarchy work. Exactly three hues carry meaning
+ * and nothing else is colored:
+ *   rank  — warm, the only warm color on screen
+ *   ok    — accepted outcomes
+ *   bad   — wrong answer / TLE
+ *
+ * Light mode is the same language with the light temperature inverted (dark ink on a pale
+ * field), not a different design.
+ */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-void: var(--v-void);
+  --color-edge: var(--v-edge);
+  --color-rank: var(--v-rank);
+  --color-ok: var(--v-ok);
+  --color-bad: var(--v-bad);
+
+  /* Difficulty, read as a traffic light on the question manifest. */
+  --color-easy: var(--v-easy);
+  --color-med: var(--v-med);
+  --color-hard: var(--v-hard);
+
+  /* The one light source, composed at alpha by the utilities below. */
+  --color-lt: rgb(var(--v-light));
+  /* Hairline: every rule, divider and input underline in the interface. */
+  --color-hair: rgb(var(--v-light) / var(--a-hairline));
+
+  --font-display: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-hero: var(--font-hero), var(--font-display), ui-sans-serif, sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ---------- Dark: light emitted into a void (the default reading of the concept) ------- */
+:root {
+  color-scheme: dark;
+
+  --v-void: #04070c;
+  --v-light: 205 244 255;
+  --v-edge: #7fefff;
+  --v-rank: #ffb454;
+  --v-ok: #56d98a;
+  --v-bad: #ff6b81;
+  --v-easy: #56d98a;
+  --v-med: #f2c94c;
+  --v-hard: #ff6b81;
+
+  /* Alpha ladder — the primary hierarchy tool.
+     Floors are set by contrast, not taste: below ~0.50 the tertiary tier stops clearing
+     4.5:1 against the pane. The ladder is compressed rather than abandoned. */
+  --a-primary: 0.95;
+  --a-secondary: 0.74;
+  --a-tertiary: 0.56;
+  --a-hairline: 0.18;
+  --a-track: 0.1;
+
+  --v-pane: rgba(9, 15, 24, 0.55);
+  --v-projection: 0 40px 90px -30px rgba(127, 239, 255, 0.35);
+  --v-edge-glow: 0 0 12px rgba(127, 239, 255, 0.4);
+  --v-scanline: rgba(127, 239, 255, 0.028);
+  --v-field:
+    radial-gradient(ellipse 100% 620px at 50% -5%, rgba(84, 122, 255, 0.14), transparent 70%),
+    radial-gradient(ellipse 80% 520px at 18% 0%, rgba(127, 239, 255, 0.09), transparent 70%);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --v-void: #e9edf1;
+  --v-light: 14 32 44;
+  --v-edge: #0d6a86;
+  --v-rank: #8a5300;
+  --v-ok: #10693f;
+  --v-bad: #b3122f;
+  --v-easy: #0f6b3f;
+  --v-med: #8a6100;
+  --v-hard: #b3122f;
+
+  --a-primary: 0.95;
+  --a-secondary: 0.82;
+  --a-tertiary: 0.68;
+  --a-hairline: 0.24;
+  --a-track: 0.1;
+
+  --v-pane: rgba(255, 255, 255, 0.72);
+  --v-projection: 0 40px 90px -34px rgba(13, 106, 134, 0.35);
+  --v-edge-glow: 0 0 10px rgba(13, 106, 134, 0.22);
+  --v-scanline: rgba(13, 106, 134, 0.022);
+  --v-field:
+    radial-gradient(ellipse 100% 620px at 50% -5%, rgba(13, 106, 134, 0.08), transparent 70%),
+    radial-gradient(ellipse 80% 520px at 18% 0%, rgba(84, 122, 255, 0.05), transparent 70%);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+
+    --v-void: #e9edf1;
+    --v-light: 14 32 44;
+    --v-edge: #0d6a86;
+    --v-rank: #8a5300;
+    --v-ok: #10693f;
+    --v-bad: #b3122f;
+    --v-easy: #0f6b3f;
+    --v-med: #8a6100;
+    --v-hard: #b3122f;
+
+    --a-primary: 0.95;
+    --a-secondary: 0.82;
+    --a-tertiary: 0.68;
+    --a-hairline: 0.24;
+    --a-track: 0.1;
+
+    --v-pane: rgba(255, 255, 255, 0.72);
+    --v-projection: 0 40px 90px -34px rgba(13, 106, 134, 0.35);
+    --v-edge-glow: 0 0 10px rgba(13, 106, 134, 0.22);
+    --v-scanline: rgba(13, 106, 134, 0.022);
+    --v-field:
+      radial-gradient(ellipse 100% 620px at 50% -5%, rgba(13, 106, 134, 0.08), transparent 70%),
+      radial-gradient(ellipse 80% 520px at 18% 0%, rgba(84, 122, 255, 0.05), transparent 70%);
   }
 }
 
+/* ---------- Base ---------- */
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--v-void);
+  color: rgb(var(--v-light) / var(--a-primary));
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+}
+
+/* The void the pane is projected into. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--v-field);
+}
+
+/* The single persistent effect: a slow scanline drift. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    var(--v-scanline) 0px,
+    var(--v-scanline) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  animation: scan-drift 14s linear infinite;
+}
+
+@keyframes scan-drift {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(4px);
+  }
+}
+
+/* ---------- Ink ladder ---------- */
+
+.ink {
+  color: rgb(var(--v-light) / var(--a-primary));
+}
+.ink-2 {
+  color: rgb(var(--v-light) / var(--a-secondary));
+}
+.ink-3 {
+  color: rgb(var(--v-light) / var(--a-tertiary));
+}
+
+.rule {
+  background: rgb(var(--v-light) / var(--a-hairline));
+}
+.track {
+  background: rgb(var(--v-light) / var(--a-track));
+}
+
+/* ---------- The pane ---------- */
+
+.pane {
+  position: relative;
+  background: var(--v-pane);
+  backdrop-filter: blur(14px);
+  /* Angular clipped corners — a different visual family from rounded SaaS cards. */
+  clip-path: polygon(
+    14px 0,
+    calc(100% - 14px) 0,
+    100% 14px,
+    100% calc(100% - 14px),
+    calc(100% - 14px) 100%,
+    14px 100%,
+    0 calc(100% - 14px),
+    0 14px
+  );
+  /* Reads as a projected surface rather than a flat div. Deliberately subliminal. */
+  transform: perspective(2000px) rotateX(0.4deg);
+  box-shadow: var(--v-projection);
+}
+
+/* Construction edge, drawn as an SVG overlay so it can trace itself on boot. */
+.pane-edge {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.pane-edge path,
+.pane-edge line {
+  stroke: var(--v-edge);
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+
+.edge-glow {
+  filter: drop-shadow(var(--v-edge-glow));
+}
+
+/* ---------- Boot sequence: the one orchestrated moment ---------- */
+
+.boot-trace {
+  stroke-dasharray: var(--trace-len, 4000);
+  stroke-dashoffset: var(--trace-len, 4000);
+  animation: trace 620ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes trace {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.boot-bracket {
+  opacity: 0;
+  animation: bracket-snap 160ms steps(2, end) forwards;
+  animation-delay: 380ms;
+}
+
+@keyframes bracket-snap {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Content resolves top to bottom after the frame exists. */
+.boot-section {
+  opacity: 0;
+  animation: resolve 220ms ease-out forwards;
+  animation-delay: calc(360ms + var(--i, 0) * 70ms);
+}
+
+@keyframes resolve {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Skip the boot: render the pane immediately. */
+  .boot-trace,
+  .boot-bracket,
+  .boot-section {
+    animation: none !important;
+    opacity: 1 !important;
+    stroke-dashoffset: 0 !important;
+    transform: none !important;
+  }
+  body::after {
+    animation: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Type ---------- */
+
+.figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  color: rgb(var(--v-light) / var(--a-tertiary));
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+
+::selection {
+  background: rgb(var(--v-light) / 0.22);
+}
+
+/* Nothing in this interface is rounded. */
+input,
+select,
+textarea,
+button {
+  border-radius: 0;
 }
