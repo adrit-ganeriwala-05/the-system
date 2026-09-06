@@ -10,6 +10,11 @@ export type ConfirmOptions = {
   confirmLabel?: string;
   cancelLabel?: string;
   danger?: boolean;
+  /** Rank is the app's one warm color — for celebratory announcements (level/rank up),
+   *  not decisions, style the panel's accent with it instead of the default cyan edge. */
+  rank?: boolean;
+  /** Drops the cancel button — for an announcement with nothing to decline. */
+  hideCancel?: boolean;
   /**
    * When provided, the dialog runs this itself and shows a loading state in place of its
    * content instead of closing immediately — the caller no longer needs its own pending
@@ -177,22 +182,33 @@ function ConfirmOverlay({
                   </div>
                 ) : (
                   <>
-                    <h2 id="confirm-title" className="font-display text-base font-semibold ink">
+                    <h2
+                      id="confirm-title"
+                      className={`font-display text-base font-semibold ${
+                        options.rank ? "text-rank" : "ink"
+                      }`}
+                    >
                       {options.title}
                     </h2>
                     <p className="mt-2 text-sm ink-2">{options.message}</p>
                     {busyError && <p className="mt-2 text-[12px] text-bad">{busyError}</p>}
                     <div className="mt-5 flex justify-end gap-5">
-                      <button
-                        onClick={onCancel}
-                        className="font-mono text-[12px] lowercase ink-3 transition-opacity duration-150 hover:opacity-100"
-                      >
-                        {options.cancelLabel ?? "cancel"}
-                      </button>
+                      {!options.hideCancel && (
+                        <button
+                          onClick={onCancel}
+                          className="font-mono text-[12px] lowercase ink-3 transition-opacity duration-150 hover:opacity-100"
+                        >
+                          {options.cancelLabel ?? "cancel"}
+                        </button>
+                      )}
                       <button
                         onClick={handleConfirm}
                         className={`border px-3 py-1.5 font-mono text-[12px] lowercase ${
-                          options.danger ? "border-bad text-bad" : "border-edge text-edge"
+                          options.danger
+                            ? "border-bad text-bad"
+                            : options.rank
+                              ? "border-rank text-rank"
+                              : "border-edge text-edge"
                         }`}
                       >
                         {busyError ? "retry" : (options.confirmLabel ?? "confirm")}

@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Manifest from "./Manifest";
 import SystemNotification, { type Notification } from "./SystemNotification";
+import { useConfirmDialog } from "./ConfirmDialog";
 import type { ProblemRow } from "./ProblemTable";
 import type { LogAttemptResult } from "@/app/actions/attempt";
 
@@ -17,6 +18,7 @@ export default function QuestionBoard({
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const idRef = useRef(0);
+  const { confirm, dialog } = useConfirmDialog();
 
   const push = useCallback((text: string, tone?: Notification["tone"]) => {
     const id = String(idRef.current++);
@@ -31,7 +33,15 @@ export default function QuestionBoard({
       push(`attempt logged · ${problem.title.toLowerCase()}`);
     }
     if (result.questCompleted) push("daily quota met. streak extended.", "ok");
-    if (result.leveledUp) push(`level up — lv.${result.newLevel}`, "rank");
+    if (result.leveledUp) {
+      void confirm({
+        title: "ascension",
+        message: `Congratulations, you're ascended to level ${result.newLevel}.`,
+        confirmLabel: "continue",
+        hideCancel: true,
+        rank: true,
+      });
+    }
     if (result.rankedUp) push(`rank reassessed — ${result.newRank}-rank`, "rank");
     if (result.unlockedTitle) push(`title unlocked — ${result.unlockedTitle.toLowerCase()}`, "rank");
     router.refresh();
@@ -41,6 +51,7 @@ export default function QuestionBoard({
     <>
       <SystemNotification notifications={notifications} />
       <Manifest problems={problems} setName={setName} onResult={handleResult} />
+      {dialog}
     </>
   );
 }
