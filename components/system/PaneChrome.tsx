@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import { LogOut, Monitor, Moon, Sun } from "lucide-react";
 import { setTheme } from "@/app/actions/theme";
 import { themeAttribute, type Theme } from "@/lib/theme";
@@ -56,7 +57,12 @@ export default function PaneChrome({
             >
               {tab.label}
               {active && (
-                <span className="absolute inset-x-1 -bottom-0.5 h-px bg-edge" aria-hidden />
+                <motion.span
+                  layoutId="nav-underline"
+                  className="absolute inset-x-1 -bottom-0.5 h-px bg-edge edge-glow"
+                  aria-hidden
+                  transition={{ type: "spring", stiffness: 500, damping: 40 }}
+                />
               )}
             </Link>
           );

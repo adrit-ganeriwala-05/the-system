@@ -3,20 +3,23 @@
 import { useState, useTransition } from "react";
 import { Trash2 } from "lucide-react";
 import { deleteAccount } from "@/app/actions/settings";
+import { useConfirmDialog } from "./ConfirmDialog";
 import Divider from "./system/Divider";
 
 export default function DangerZone() {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { confirm, dialog } = useConfirmDialog();
 
-  function run() {
-    if (
-      !confirm(
-        "Delete your account? Every submission, quest, streak and group you own is permanently removed. This cannot be undone.",
-      )
-    ) {
-      return;
-    }
+  async function run() {
+    const ok = await confirm({
+      title: "delete account",
+      message:
+        "Every submission, quest, streak and group you own is permanently removed. This cannot be undone.",
+      confirmLabel: "delete",
+      danger: true,
+    });
+    if (!ok) return;
     setError(null);
     startTransition(async () => {
       try {
@@ -43,6 +46,7 @@ export default function DangerZone() {
         {pending ? "deleting…" : "delete account"}
       </button>
       {error && <p className="mt-3 text-[12px] text-bad">{error}</p>}
+      {dialog}
     </div>
   );
 }

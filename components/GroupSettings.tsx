@@ -10,6 +10,7 @@ import {
  removeMember,
  transferOwnership,
 } from "@/app/actions/groups";
+import { useConfirmDialog } from "./ConfirmDialog";
 
 type Member = { userId: string; name: string | null; role: "OWNER" | "MEMBER" };
 
@@ -35,6 +36,7 @@ export default function GroupSettings({
  const [copied, setCopied] = useState(false);
  const [error, setError] = useState<string | null>(null);
  const [pending, startTransition] = useTransition();
+ const { confirm, dialog } = useConfirmDialog();
 
  const inviteUrl = `${baseUrl}/join/${code}`;
 
@@ -140,9 +142,14 @@ export default function GroupSettings({
  {isOwner ? (
  <button
  disabled={pending}
- onClick={() => {
- if (confirm("Delete this group? All memberships are removed. This can't be undone."))
- run(() => deleteGroup(groupId));
+ onClick={async () => {
+ const ok = await confirm({
+ title: "delete group",
+ message: "All memberships are removed. This can't be undone.",
+ confirmLabel: "delete",
+ danger: true,
+ });
+ if (ok) run(() => deleteGroup(groupId));
  }}
  className="flex items-center gap-1.5 border border-bad px-3 py-2 text-xs text-bad hover:bg-transparent disabled:opacity-50"
  >
@@ -162,6 +169,7 @@ export default function GroupSettings({
  </button>
  )}
  </div>
+ {dialog}
  </section>
  );
 }

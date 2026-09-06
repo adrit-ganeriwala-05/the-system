@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { Difficulty, Pattern, SubmissionStatus } from "@prisma/client";
 import Divider from "./system/Divider";
@@ -29,6 +29,29 @@ const STATUS_KEYS: StatusKey[] = ["unsolved", "solved"];
 /** Toggle membership in a facet. */
 function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+}
+
+/**
+ * Lags a value behind its source by `delay` — used so the row list re-filters only after
+ * the toggle's underline has finished emerging, rather than snapping instantly. Skipped
+ * entirely under reduced motion.
+ */
+function useDelayed<T>(value: T, delay: number, skip: boolean): T {
+  const [delayed, setDelayed] = useState(value);
+  useEffect(() => {
+    if (skip) return;
+    const id = setTimeout(() => setDelayed(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay, skip]);
+  return skip ? value : delayed;
+}
+
+/** Whether the facet item on either side of index `i` is already active — used to grow a
+ *  newly-selected filter's underline out from the edge touching its active neighbor. */
+function emergeOrigin<T>(list: T[], active: T[], i: number): "left" | "right" {
+  const leftActive = i > 0 && active.includes(list[i - 1]);
+  const rightActive = i < list.length - 1 && active.includes(list[i + 1]);
+  return leftActive ? "left" : rightActive ? "right" : "left";
 }
 
 export default function Manifest({
@@ -67,19 +90,25 @@ export default function Manifest({
   const anyFilter =
     statuses.length > 0 || difficulties.length > 0 || activePatterns.length > 0;
 
+  // Rows re-filter slightly after the toggle state changes, so an emerging underline
+  // finishes its motion before the manifest reflows underneath it.
+  const delayedStatuses = useDelayed(statuses, 220, !!reduce);
+  const delayedDifficulties = useDelayed(difficulties, 220, !!reduce);
+  const delayedPatterns = useDelayed(activePatterns, 220, !!reduce);
+
   const rows = useMemo(() => {
     return problems.filter((p) => {
       if (query && !p.title.toLowerCase().includes(query.toLowerCase())) return false;
-      if (activePatterns.length > 0 && !activePatterns.includes(p.pattern)) return false;
-      if (difficulties.length > 0 && !difficulties.includes(p.difficulty)) return false;
-      if (statuses.length > 0) {
+      if (delayedPatterns.length > 0 && !delayedPatterns.includes(p.pattern)) return false;
+      if (delayedDifficulties.length > 0 && !delayedDifficulties.includes(p.difficulty)) return false;
+      if (delayedStatuses.length > 0) {
         const solved = p.status === "CLEARED";
-        const wanted = statuses.some((k) => (k === "solved" ? solved : !solved));
+        const wanted = delayedStatuses.some((k) => (k === "solved" ? solved : !solved));
         if (!wanted) return false;
       }
       return true;
     });
-  }, [problems, statuses, difficulties, activePatterns, query]);
+  }, [problems, delayedStatuses, delayedDifficulties, delayedPatterns, query]);
 
   function clearAll() {
     setStatuses([]);
@@ -99,24 +128,26 @@ export default function Manifest({
             all
           </Toggle>
           <Sep />
-          {STATUS_KEYS.map((k) => (
+          {STATUS_KEYS.map((k, i) => (
             <Toggle
               key={k}
               active={statuses.includes(k)}
               onClick={() => setStatuses((v) => toggle(v, k))}
               reduce={!!reduce}
+              origin={emergeOrigin(STATUS_KEYS, statuses, i)}
             >
               {k}
             </Toggle>
           ))}
           <Sep />
-          {DIFF_ORDER.map((d) => (
+          {DIFF_ORDER.map((d, i) => (
             <Toggle
               key={d}
               active={difficulties.includes(d)}
               onClick={() => setDifficulties((v) => toggle(v, d))}
               reduce={!!reduce}
               dot={DIFF_DOT[d]}
+              origin={emergeOrigin(DIFF_ORDER, difficulties, i)}
             >
               {DIFF_TITLE[d]}
             </Toggle>
@@ -139,12 +170,13 @@ export default function Manifest({
           >
             all patterns
           </Toggle>
-          {patterns.map((p) => (
+          {patterns.map((p, i) => (
             <Toggle
               key={p}
               active={activePatterns.includes(p)}
               onClick={() => setSelectedPatterns((v) => toggle(v, p))}
               reduce={!!reduce}
+              origin={emergeOrigin(patterns, activePatterns, i)}
             >
               {PATTERN_LABELS[p].toLowerCase()}
             </Toggle>
@@ -391,8 +423,10 @@ function Sep() {
 /**
  * Multi-select filter toggle.
  *
- * Selection is a real state change, so it gets motion: the underline wipes in from the
- * left and the label lifts a hair. Reduced motion drops to a plain opacity change.
+ * Selection is a real state change, so it gets motion: the underline grows in, rooted at
+ * whichever edge touches an already-active neighbor (`origin`), so a second filter in the
+ * same group visibly emerges from the first rather than appearing on its own. Reduced
+ * motion drops to a plain opacity change.
  */
 function Toggle({
   active,
@@ -400,12 +434,14 @@ function Toggle({
   children,
   reduce,
   dot,
+  origin = "left",
 }: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
   reduce: boolean;
   dot?: string;
+  origin?: "left" | "right";
 }) {
   return (
     <motion.button
@@ -430,7 +466,8 @@ function Toggle({
       <span>{children}</span>
       <motion.span
         aria-hidden
-        className="absolute inset-x-0 bottom-0 h-px origin-left bg-edge"
+        className="absolute inset-x-0 bottom-0 h-px bg-edge edge-glow"
+        style={{ transformOrigin: origin === "right" ? "100% 50%" : "0% 50%" }}
         initial={false}
         animate={{ scaleX: active ? 1 : 0, opacity: active ? 1 : 0 }}
         transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34 }}
