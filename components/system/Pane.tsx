@@ -86,7 +86,19 @@ export default function Pane({ children }: { children: React.ReactNode }) {
       <motion.div
         ref={ref}
         className="pane flex flex-1 flex-col"
-        style={{ transformOrigin: "50% 50%", pointerEvents: full ? "auto" : "none" }}
+        style={{
+          transformOrigin: "50% 50%",
+          pointerEvents: full ? "auto" : "none",
+          // backdrop-filter recomputes its sampled backdrop every frame an element's
+          // screen-space bounds change — animating a transform on the same element that
+          // carries the pane's blur is a known-heavy combination that can visibly stall
+          // weaker hardware. There is nothing behind the pane worth blurring differently
+          // while it is squished to a dot/line anyway, so the blur is simply off for that
+          // brief window and switches back on the instant the box holds still.
+          backdropFilter: full ? undefined : "none",
+          WebkitBackdropFilter: full ? undefined : "none",
+          willChange: full ? "auto" : "transform",
+        }}
         animate={SCALE[morph]}
         transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 28 }}
       >
