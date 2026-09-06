@@ -19,17 +19,23 @@ async function assertOwner(groupId: string, userId: string) {
   }
 }
 
-export async function createGroup(name: string) {
+const MEMBER_CAP_MIN = 2;
+const MEMBER_CAP_MAX = 10;
+
+export async function createGroup(name: string, memberCap: number = MEMBER_CAP_MAX) {
   const userId = await requireUserIdForAction();
   const trimmed = name.trim();
   if (!trimmed) throw new Error("Group name is required.");
   if (trimmed.length > 60) throw new Error("Group name must be 60 characters or fewer.");
+
+  const cap = Math.max(MEMBER_CAP_MIN, Math.min(MEMBER_CAP_MAX, Math.round(memberCap)));
 
   const group = await prisma.group.create({
     data: {
       name: trimmed,
       ownerId: userId,
       inviteCode: newInviteCode(),
+      memberCap: cap,
       members: { create: { userId, role: "OWNER" } },
     },
   });

@@ -33,6 +33,13 @@ export async function ensureTodayQuest(userId: string): Promise<QuestOutcome> {
   const refreshed = await refillFreezesIfNewMonth(user);
   const track = resolveTrack(refreshed);
 
+  // A review means re-attempting something already solved — with nothing solved yet,
+  // there is nothing to revisit, so the review target would be unmeetable.
+  const solvedCount = await prisma.userProblemProgress.count({
+    where: { userId, solved: true },
+  });
+  const reviewTarget = solvedCount === 0 ? 0 : track.reviewTarget;
+
   const prev = await prisma.dailyQuest.findFirst({
     where: { userId, date: { lt: todayDate } },
     orderBy: { date: "desc" },
@@ -45,7 +52,7 @@ export async function ensureTodayQuest(userId: string): Promise<QuestOutcome> {
         userId,
         date: todayDate,
         targetNewSolves: track.newTarget,
-        targetReviews: track.reviewTarget,
+        targetReviews: reviewTarget,
       },
     });
     return { quest, freezeConsumed: false, streakReset: false };
@@ -61,7 +68,7 @@ export async function ensureTodayQuest(userId: string): Promise<QuestOutcome> {
         userId,
         date: todayDate,
         targetNewSolves: track.newTarget,
-        targetReviews: track.reviewTarget,
+        targetReviews: reviewTarget,
       },
     });
     return { quest, freezeConsumed: false, streakReset: false };
@@ -77,7 +84,7 @@ export async function ensureTodayQuest(userId: string): Promise<QuestOutcome> {
           userId,
           date: todayDate,
           targetNewSolves: track.newTarget,
-          targetReviews: track.reviewTarget,
+          targetReviews: reviewTarget,
           freezeUsed: true,
         },
       }),

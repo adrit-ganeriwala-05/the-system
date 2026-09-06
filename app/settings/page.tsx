@@ -1,6 +1,7 @@
 import { requireOnboardedUserId, requireUser } from "@/lib/session";
 import Divider from "@/components/system/Divider";
 import TrackSettings from "@/components/TrackSettings";
+import ProfileSettings from "@/components/ProfileSettings";
 
 export const dynamic = "force-dynamic";
 
@@ -18,10 +19,14 @@ export default async function SettingsPage() {
         </p>
       </div>
       <div className="boot-section mt-7" style={{ ["--i" as string]: 1 }}>
+        <ProfileSettings name={user.name} />
+      </div>
+      <div className="boot-section mt-7" style={{ ["--i" as string]: 2 }}>
         <TrackSettings
           track={user.commitmentTrack}
           customNewTarget={user.customNewTarget}
           customReviewTarget={user.customReviewTarget}
+          customFreezesPerMonth={user.customFreezesPerMonth}
           freezesRemaining={user.streakFreezesRemaining}
         />
       </div>

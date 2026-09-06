@@ -32,42 +32,38 @@ export default function StatusView({ data }: { data: DashboardData }) {
         />
       </section>
 
-      {/* Wide viewports split into two columns divided by a hairline — internal structure
-          inside the one pane, so the extra width does work instead of stretching bars. */}
-      <div className="mt-7 grid gap-x-10 gap-y-7 xl:grid-cols-2">
-        <div className="min-w-0">
-          <div className="boot-section" style={next()}>
-            <Divider
-              label={data.activeSet.name.toLowerCase()}
-              right={<SetSwitcher sets={data.problemSets} activeId={data.activeSet.id} />}
-            />
-            <StatLine
-              solved={data.solvedCount}
-              total={data.totalInSet}
-              streak={data.user.currentStreak}
-              longest={data.user.longestStreak}
-              rankLabel={data.user.rankLabel}
-              freezes={data.user.streakFreezesRemaining}
-              projectedDays={data.projectedDays}
-            />
-          </div>
-
-          <div className="boot-section mt-7" style={next()}>
-            <Divider label="today" right={<Countdown ms={data.msUntilMidnight} />} />
-            <Today quest={data.quest} track={data.track.label} />
-          </div>
-
-          <div className="boot-section mt-7" style={next()}>
-            <Divider label="activity" right="14d" />
-            <Activity submissions={data.recentSubmissions} />
-          </div>
+      {/* Every section stacks full-width — the dashboard is the app's primary surface, so
+          nothing here shares horizontal space or shrinks to fit a column. */}
+      <div className="mt-9 space-y-10">
+        <div className="boot-section" style={next()}>
+          <Divider
+            label={data.activeSet.name.toLowerCase()}
+            right={<SetSwitcher sets={data.problemSets} activeId={data.activeSet.id} />}
+          />
+          <StatLine
+            solved={data.solvedCount}
+            total={data.totalInSet}
+            streak={data.user.currentStreak}
+            longest={data.user.longestStreak}
+            rankLabel={data.user.rankLabel}
+            freezes={data.user.streakFreezesRemaining}
+            projectedDays={data.projectedDays}
+          />
         </div>
 
-        <div className="min-w-0 xl:border-l xl:border-hair xl:pl-10">
-          <div className="boot-section" style={next()}>
-            <Divider label="mastery" right={`${data.mastery.length} patterns`} />
-            <Mastery mastery={data.mastery} />
-          </div>
+        <div className="boot-section" style={next()}>
+          <Divider label="today" right={<Countdown ms={data.msUntilMidnight} />} />
+          <Today quest={data.quest} track={data.track.label} />
+        </div>
+
+        <div className="boot-section" style={next()}>
+          <Divider label="mastery" right={`${data.mastery.length} patterns`} />
+          <Mastery mastery={data.mastery} />
+        </div>
+
+        <div className="boot-section" style={next()}>
+          <Divider label="activity" right="14d" />
+          <Activity submissions={data.recentSubmissions} />
         </div>
       </div>
     </div>
@@ -102,33 +98,33 @@ function Identity({
               Scoped to the numeral's own row so it never crosses the title beneath. */}
           <div className="relative">
             <svg
-              width="74"
-              height="74"
-              viewBox="0 0 74 74"
+              width="94"
+              height="94"
+              viewBox="0 0 94 94"
               aria-hidden
-              className="pointer-events-none absolute -left-4 -top-3"
+              className="pointer-events-none absolute -left-5 -top-4"
             >
               <path
-                d="M 37 6 A 31 31 0 1 0 68 37"
+                d="M 47 8 A 39 39 0 1 0 86 47"
                 fill="none"
                 stroke="rgb(var(--v-light) / var(--a-track))"
-                strokeWidth="1.5"
+                strokeWidth="2"
               />
               <path
-                d="M 37 6 A 31 31 0 1 0 68 37"
+                d="M 47 8 A 39 39 0 1 0 86 47"
                 fill="none"
                 stroke="var(--v-edge)"
-                strokeWidth="1.5"
+                strokeWidth="2"
                 pathLength={100}
                 strokeDasharray={`${pct} 100`}
                 className="edge-glow"
               />
             </svg>
-            <div className="relative pl-6 font-display text-5xl font-bold leading-none ink">
+            <div className="relative pl-7 font-display text-7xl font-bold leading-none ink">
               Lv.{level}
             </div>
           </div>
-          {title && <div className="mt-2 pl-6 text-sm ink-2">{title}</div>}
+          {title && <div className="mt-3 pl-7 text-base ink-2">{title}</div>}
         </div>
 
         <div className="text-right">
@@ -176,26 +172,31 @@ function StatLine({
   projectedDays: number;
 }) {
   return (
-    <div className="figure mt-4 flex flex-wrap items-baseline gap-x-7 gap-y-2 text-sm">
-      <span className="ink">
-        {solved}/{total} <span className="ink-3">cleared</span>
-      </span>
-      <span className="ink">
-        {streak}d <span className="ink-3">streak</span>
-      </span>
-      <span className="ink-3">
-        {longest}d <span className="ink-3">longest</span>
-      </span>
-      {/* Rank is the only warm color on the screen. */}
-      <span className="text-rank">{rankLabel}</span>
-      <span className="ink-3">
-        {freezes} <span className="ink-3">freezes</span>
-      </span>
-      {projectedDays > 0 && (
-        <span className="ink-3">
-          ~{projectedDays}d <span className="ink-3">to s-rank</span>
+    <div className="mt-5">
+      <div className="figure flex items-baseline gap-4">
+        <span className="font-display text-6xl font-bold leading-none ink">
+          {solved}/{total}
         </span>
-      )}
+        <span className="text-lg ink-3">cleared</span>
+      </div>
+      <div className="figure mt-4 flex flex-wrap items-baseline gap-x-7 gap-y-2 text-base">
+        <span className="ink-2">
+          {streak}d <span className="ink-3">streak</span>
+        </span>
+        <span className="ink-3">
+          {longest}d <span className="ink-3">longest</span>
+        </span>
+        {/* Rank is the only warm color on the screen. */}
+        <span className="text-rank">{rankLabel}</span>
+        <span className="ink-3">
+          {freezes} <span className="ink-3">freezes</span>
+        </span>
+        {projectedDays > 0 && (
+          <span className="ink-3">
+            ~{projectedDays}d <span className="ink-3">to s-rank</span>
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -308,18 +309,18 @@ function Mastery({ mastery }: { mastery: DashboardData["mastery"] }) {
     return <p className="mt-4 text-sm ink-3">no patterns in this set.</p>;
   }
   return (
-    <ul className="mt-4 space-y-1.5">
+    <ul className="mt-5 space-y-3">
       {mastery.map((m) => (
-        <li key={m.pattern} className="flex items-center gap-4">
-          <span className="w-28 shrink-0 truncate text-[13px] lowercase ink-2 sm:w-44">{m.label}</span>
+        <li key={m.pattern} className="flex items-center gap-5">
+          <span className="w-32 shrink-0 truncate text-sm lowercase ink-2 sm:w-52">{m.label}</span>
           {/* Track is always drawn, so an all-zero state still reads as structure. */}
-          <span className="track relative h-1.5 flex-1">
+          <span className="track relative h-2.5 flex-1">
             <span
               className="absolute inset-y-0 left-0 bg-edge"
               style={{ width: `${m.pct}%` }}
             />
           </span>
-          <span className="figure w-12 shrink-0 text-right text-[11px] ink-3">
+          <span className="figure w-14 shrink-0 text-right text-sm ink-3">
             {m.solved}/{m.total}
           </span>
         </li>

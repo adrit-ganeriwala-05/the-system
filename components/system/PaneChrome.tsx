@@ -8,8 +8,9 @@ import { themeAttribute, type Theme } from "@/lib/theme";
 import { useState, useTransition } from "react";
 
 const TABS = [
-  { href: "/", label: "status" },
+  { href: "/", label: "dashboard" },
   { href: "/questions", label: "questions" },
+  { href: "/calendar", label: "calendar" },
   { href: "/groups", label: "groups" },
   { href: "/settings", label: "settings" },
 ];

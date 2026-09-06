@@ -6,6 +6,18 @@ import { requireUserIdForAction } from "@/lib/session";
 import { clamp, CUSTOM_LIMITS, resolveTrack } from "@/lib/constants";
 import type { CommitmentTrack } from "@prisma/client";
 
+export async function setDisplayName(name: string) {
+  const userId = await requireUserIdForAction();
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error("Name cannot be empty.");
+  if (trimmed.length > 40) throw new Error("Name must be 40 characters or fewer.");
+
+  await prisma.user.update({ where: { id: userId }, data: { name: trimmed } });
+
+  revalidatePath("/");
+  revalidatePath("/settings");
+}
+
 export async function setActiveProblemSet(problemSetId: string) {
   const userId = await requireUserIdForAction();
 
@@ -24,6 +36,7 @@ export async function setCommitmentTrack(input: {
   track: CommitmentTrack;
   customNewTarget?: number;
   customReviewTarget?: number;
+  customFreezesPerMonth?: number;
 }) {
   const userId = await requireUserIdForAction();
 
@@ -35,6 +48,10 @@ export async function setCommitmentTrack(input: {
     input.track === "CUSTOM"
       ? clamp(input.customReviewTarget ?? 0, CUSTOM_LIMITS.reviewMin, CUSTOM_LIMITS.reviewMax)
       : null;
+  const customFreezesPerMonth =
+    input.track === "CUSTOM"
+      ? clamp(input.customFreezesPerMonth ?? 1, CUSTOM_LIMITS.freezesMin, CUSTOM_LIMITS.freezesMax)
+      : null;
 
   const user = await prisma.user.update({
     where: { id: userId },
@@ -42,6 +59,7 @@ export async function setCommitmentTrack(input: {
       commitmentTrack: input.track,
       customNewTarget,
       customReviewTarget,
+      customFreezesPerMonth,
     },
   });
 

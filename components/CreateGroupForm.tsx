@@ -7,6 +7,7 @@ import { createGroup, joinGroup } from "@/app/actions/groups";
 export default function CreateGroupForm() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [memberCap, setMemberCap] = useState(10);
   const [invite, setInvite] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -28,7 +29,7 @@ export default function CreateGroupForm() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          run(() => createGroup(name));
+          run(() => createGroup(name, memberCap));
         }}
         className="flex items-baseline gap-3"
       >
@@ -43,6 +44,20 @@ export default function CreateGroupForm() {
           placeholder="group name"
           className="w-52 border-0 border-b border-hair bg-transparent py-1 font-mono text-[12px] ink outline-none placeholder:opacity-50 focus:border-edge"
         />
+        <label className="flex items-baseline gap-2">
+          <span className="label">members</span>
+          <input
+            id="g-cap"
+            type="number"
+            min={2}
+            max={10}
+            value={memberCap}
+            onChange={(e) =>
+              setMemberCap(Math.max(2, Math.min(10, Number(e.target.value))))
+            }
+            className="w-12 border-0 border-b border-hair bg-transparent py-1 font-mono text-[12px] ink outline-none focus:border-edge"
+          />
+        </label>
         <button
           type="submit"
           disabled={pending || !name.trim()}

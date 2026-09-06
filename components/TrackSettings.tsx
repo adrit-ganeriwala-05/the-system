@@ -13,17 +13,20 @@ export default function TrackSettings({
   track,
   customNewTarget,
   customReviewTarget,
+  customFreezesPerMonth,
   freezesRemaining,
 }: {
   track: CommitmentTrack;
   customNewTarget: number | null;
   customReviewTarget: number | null;
+  customFreezesPerMonth: number | null;
   freezesRemaining: number;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<CommitmentTrack>(track);
   const [newTarget, setNewTarget] = useState(customNewTarget ?? 2);
   const [reviewTarget, setReviewTarget] = useState(customReviewTarget ?? 0);
+  const [freezeTarget, setFreezeTarget] = useState(customFreezesPerMonth ?? 1);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -37,6 +40,7 @@ export default function TrackSettings({
           track: selected,
           customNewTarget: newTarget,
           customReviewTarget: reviewTarget,
+          customFreezesPerMonth: freezeTarget,
         });
         setSaved(true);
         setTimeout(() => setSaved(false), 2500);
@@ -105,9 +109,24 @@ export default function TrackSettings({
               className="w-14 border-0 border-b border-hair bg-transparent py-0.5 font-mono text-[12px] ink outline-none focus:border-edge"
             />
           </label>
-          <span className="text-[12px] ink-3">
-            {newTarget >= 4 ? "no freezes at 4+ per day" : "1 freeze per month"}
-          </span>
+          <label className="flex items-baseline gap-2">
+            <span className="label">freezes / month</span>
+            <input
+              type="number"
+              min={CUSTOM_LIMITS.freezesMin}
+              max={CUSTOM_LIMITS.freezesMax}
+              value={freezeTarget}
+              onChange={(e) =>
+                setFreezeTarget(
+                  Math.max(
+                    CUSTOM_LIMITS.freezesMin,
+                    Math.min(CUSTOM_LIMITS.freezesMax, Number(e.target.value)),
+                  ),
+                )
+              }
+              className="w-14 border-0 border-b border-hair bg-transparent py-0.5 font-mono text-[12px] ink outline-none focus:border-edge"
+            />
+          </label>
         </div>
       )}
 

@@ -134,6 +134,7 @@ model User {
   commitmentTrack       CommitmentTrack @default(STANDARD)
   customNewTarget     Int?
   customReviewTarget  Int?
+  customFreezesPerMonth Int?
   streakFreezesRemaining Int      @default(1)
   streakFreezeResetAt    DateTime?
 

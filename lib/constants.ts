@@ -141,6 +141,8 @@ export const CUSTOM_LIMITS = {
   newMax: 10,
   reviewMin: 0,
   reviewMax: 5,
+  freezesMin: 0,
+  freezesMax: 4,
   penaltyAbsoluteCap: 5,
 };
 
@@ -158,6 +160,7 @@ export function resolveTrack(user: {
   commitmentTrack: CommitmentTrack;
   customNewTarget: number | null;
   customReviewTarget: number | null;
+  customFreezesPerMonth?: number | null;
 }): ResolvedTrack {
   if (user.commitmentTrack === "CUSTOM") {
     const newTarget = clamp(
@@ -170,13 +173,17 @@ export function resolveTrack(user: {
       CUSTOM_LIMITS.reviewMin,
       CUSTOM_LIMITS.reviewMax,
     );
+    const freezesPerMonth = clamp(
+      user.customFreezesPerMonth ?? (newTarget >= 4 ? 0 : 1),
+      CUSTOM_LIMITS.freezesMin,
+      CUSTOM_LIMITS.freezesMax,
+    );
     return {
       track: "CUSTOM",
       label: "Custom",
       newTarget,
       reviewTarget,
-      // Spec: 0 freezes for demanding custom targets, otherwise 1/month.
-      freezesPerMonth: newTarget >= 4 ? 0 : 1,
+      freezesPerMonth,
       // Spec: escalate to newTarget + 1, capped at 5 absolute.
       penaltyCap: Math.min(newTarget + 1, CUSTOM_LIMITS.penaltyAbsoluteCap),
     };
