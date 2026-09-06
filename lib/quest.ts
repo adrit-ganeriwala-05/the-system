@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import { resolveTrack } from "./constants";
-import { dateKey, dateKeyToUtcMidnight, monthKey, todayKey, yesterdayKey } from "./date";
+import { daysBetweenKeys, dateKey, dateKeyToUtcMidnight, monthKey, todayKey, yesterdayKey } from "./date";
 import type { DailyQuest, User } from "@prisma/client";
 
 export type QuestOutcome = {
@@ -74,8 +74,14 @@ export async function ensureTodayQuest(userId: string): Promise<QuestOutcome> {
     return { quest, freezeConsumed: false, streakReset: false };
   }
 
-  // A day was missed. Spend a freeze if one remains, otherwise break the streak.
-  const canFreeze = refreshed.streakFreezesRemaining > 0 && refreshed.currentStreak > 0;
+  // A freeze covers exactly one missed day, not an entire gap — a 3-day absence needs
+  // 3 freezes, not 1. Missed days = calendar days strictly between prev and today, plus
+  // prev's own day if its quota went unmet.
+  const missedDays = daysBetweenKeys(prevKey, key) - 1 + (prev.isCompleted ? 0 : 1);
+  const canFreeze =
+    missedDays > 0 &&
+    refreshed.streakFreezesRemaining >= missedDays &&
+    refreshed.currentStreak > 0;
 
   if (canFreeze) {
     const [quest] = await prisma.$transaction([
@@ -90,7 +96,7 @@ export async function ensureTodayQuest(userId: string): Promise<QuestOutcome> {
       }),
       prisma.user.update({
         where: { id: userId },
-        data: { streakFreezesRemaining: { decrement: 1 } },
+        data: { streakFreezesRemaining: { decrement: missedDays } },
       }),
     ]);
     return { quest, freezeConsumed: true, streakReset: false };

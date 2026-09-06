@@ -4,7 +4,19 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUserIdForAction } from "@/lib/session";
 import { clamp, CUSTOM_LIMITS, resolveTrack } from "@/lib/constants";
+import { signOut } from "@/auth";
 import type { CommitmentTrack } from "@prisma/client";
+
+/**
+ * Deletes the account and everything under it. Every child row (submissions, progress,
+ * quests, sessions, owned groups) cascades from the schema's onDelete: Cascade, so one
+ * delete is enough — nothing is left orphaned.
+ */
+export async function deleteAccount() {
+  const userId = await requireUserIdForAction();
+  await prisma.user.delete({ where: { id: userId } });
+  await signOut({ redirectTo: "/" });
+}
 
 export async function setDisplayName(name: string) {
   const userId = await requireUserIdForAction();

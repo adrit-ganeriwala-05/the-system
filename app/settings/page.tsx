@@ -2,6 +2,7 @@ import { requireOnboardedUserId, requireUser } from "@/lib/session";
 import Divider from "@/components/system/Divider";
 import TrackSettings from "@/components/TrackSettings";
 import ProfileSettings from "@/components/ProfileSettings";
+import DangerZone from "@/components/DangerZone";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,9 @@ export default async function SettingsPage() {
           customFreezesPerMonth={user.customFreezesPerMonth}
           freezesRemaining={user.streakFreezesRemaining}
         />
+      </div>
+      <div className="boot-section mt-7" style={{ ["--i" as string]: 3 }}>
+        <DangerZone />
       </div>
     </div>
   );
