@@ -31,6 +31,26 @@ function toggle<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 }
 
+/** "YYYY-MM-DD" from the viewer's local calendar day — `toISOString` reads the UTC date,
+ *  which is already tomorrow near midnight in any negative-UTC-offset timezone. */
+function localDateInputValue(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** The date picker only carries a calendar day, not a time — combining it with the
+ *  literal UTC midnight of that day (via `new Date(dateString)`) stamped every log at the
+ *  same fixed clock time once rendered back in local time. Pairing the picked day with the
+ *  actual current time-of-day instead means a same-day log gets its real timestamp, and a
+ *  backdated one at least gets a plausible time rather than a frozen midnight artifact. */
+function combineDateWithNow(dateStr: string): Date {
+  const [y, m, day] = dateStr.split("-").map(Number);
+  const now = new Date();
+  return new Date(y, m - 1, day, now.getHours(), now.getMinutes(), now.getSeconds());
+}
+
 /**
  * Lags a value behind its source by `delay` — used so the row list re-filters only after
  * the toggle's underline has finished emerging, rather than snapping instantly. Skipped
@@ -304,7 +324,7 @@ function LogForm({
   onResult: (result: LogAttemptResult, problem: ProblemRow) => void;
 }) {
   const [outcome, setOutcome] = useState<SubmissionStatus>("ACCEPTED");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => localDateInputValue(new Date()));
   const [minutes, setMinutes] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
@@ -322,7 +342,7 @@ function LogForm({
         status: outcome,
         notes: notes || undefined,
         timeSpentMin: minutes ? Number(minutes) : undefined,
-        submittedAt: new Date(date).toISOString(),
+        submittedAt: combineDateWithNow(date).toISOString(),
       });
       onResult(result, problem);
       onDone();
@@ -359,7 +379,7 @@ function LogForm({
           <input
             type="date"
             value={date}
-            max={new Date().toISOString().slice(0, 10)}
+            max={localDateInputValue(new Date())}
             onChange={(e) => setDate(e.target.value)}
             className="border-0 border-b bg-transparent py-0.5 font-mono text-[12px] ink outline-none focus:border-edge"
             style={hair}
