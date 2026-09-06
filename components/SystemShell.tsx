@@ -1,5 +1,6 @@
 import Pane from "./system/Pane";
 import PaneChrome from "./system/PaneChrome";
+import { PaneMotionProvider } from "./system/PaneMotionContext";
 import { auth, signOut } from "@/auth";
 import { parseTheme, THEME_COOKIE } from "@/lib/theme";
 import { cookies } from "next/headers";
@@ -22,11 +23,13 @@ export default async function SystemShell({ children }: { children: React.ReactN
   // box. The cap only stops it becoming unreadably wide on an ultrawide display.
   return (
     <div className="mx-auto flex w-full max-w-[2200px] flex-1 flex-col px-3 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
-      <Pane>
-        <PaneChrome theme={theme} signOutAction={doSignOut} signedIn={Boolean(session?.user)} />
-        <div className="rule h-px" />
-        {children}
-      </Pane>
+      <PaneMotionProvider>
+        <Pane>
+          <PaneChrome theme={theme} signOutAction={doSignOut} signedIn={Boolean(session?.user)} />
+          <div className="rule h-px" />
+          {children}
+        </Pane>
+      </PaneMotionProvider>
     </div>
   );
 }

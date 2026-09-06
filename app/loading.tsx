@@ -1,10 +1,18 @@
-import { Loader2 } from "lucide-react";
+"use client";
 
+import { useEffect } from "react";
+import { usePaneMotion } from "@/components/system/PaneMotionContext";
+
+/**
+ * Renders nothing itself — the pane draws the loading state (a comet chasing its border,
+ * "loading…" centered) on its own outline. This file's only job is to tell the pane when a
+ * route is in flight, for exactly as long as this fallback stays mounted.
+ */
 export default function Loading() {
- return (
- <div className="flex flex-1 flex-col items-center justify-center gap-3 text-edge">
- <Loader2 className="h-8 w-8 animate-spin" />
- <p className="text-xs ">booting…</p>
- </div>
- );
+  const { startLoading, stopLoading } = usePaneMotion();
+  useEffect(() => {
+    startLoading();
+    return () => stopLoading();
+  }, [startLoading, stopLoading]);
+  return null;
 }

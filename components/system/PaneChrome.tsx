@@ -7,6 +7,7 @@ import { LogOut, Monitor, Moon, Sun } from "lucide-react";
 import { setTheme } from "@/app/actions/theme";
 import { themeAttribute, type Theme } from "@/lib/theme";
 import { useState, useTransition } from "react";
+import { usePaneMotion } from "./PaneMotionContext";
 
 const TABS = [
   { href: "/", label: "dashboard" },
@@ -30,6 +31,7 @@ export default function PaneChrome({
   signedIn: boolean;
 }) {
   const pathname = usePathname();
+  const { collapse } = usePaneMotion();
 
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-5 py-3.5 sm:px-7">
@@ -72,16 +74,18 @@ export default function PaneChrome({
       <div className="ml-auto flex items-center gap-2">
         <ThemeControl initial={theme} />
         {signedIn && (
-        <form action={signOutAction}>
           <button
-            type="submit"
+            type="button"
             title="sign out"
             aria-label="Sign out"
+            onClick={async () => {
+              await collapse();
+              await signOutAction();
+            }}
             className="ink-3 p-1 transition-opacity duration-150 hover:opacity-100"
           >
             <LogOut className="h-3.5 w-3.5" />
           </button>
-        </form>
         )}
       </div>
     </div>

@@ -3,20 +3,24 @@
 import { Trash2 } from "lucide-react";
 import { deleteAccount } from "@/app/actions/settings";
 import { useConfirmDialog } from "./ConfirmDialog";
+import { usePaneMotion } from "./system/PaneMotionContext";
 import Divider from "./system/Divider";
 
 export default function DangerZone() {
   const { confirm, dialog } = useConfirmDialog();
+  const { collapse } = usePaneMotion();
 
-  function run() {
-    void confirm({
+  async function run() {
+    const ok = await confirm({
       title: "delete account",
       message:
         "Every submission, quest, streak and group you own is permanently removed. This cannot be undone.",
       confirmLabel: "delete",
       danger: true,
-      action: deleteAccount,
     });
+    if (!ok) return;
+    await collapse();
+    await deleteAccount();
   }
 
   return (

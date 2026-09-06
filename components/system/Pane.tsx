@@ -1,17 +1,36 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { usePaneMotion } from "./PaneMotionContext";
+
+type Morph = "dot" | "line" | "full";
+
+const SCALE: Record<Morph, { scaleX: number; scaleY: number }> = {
+  dot: { scaleX: 0.02, scaleY: 0.02 },
+  line: { scaleX: 1, scaleY: 0.012 },
+  full: { scaleX: 1, scaleY: 1 },
+};
 
 /**
  * The single window everything is projected into.
  *
+ * Its shape is a small state machine (see PaneMotionContext), rendered here as a uniform
+ * transform-scale on the whole box rather than animating width/height directly — the pane
+ * is fluid (sized by flex-1), so scaling around its own true, already-laid-out size is what
+ * lets the dot/line/box morph track that real size instead of fighting the layout for it.
+ *
  * The border is an SVG overlay rather than a CSS border so it can trace itself on boot,
  * and so the corner brackets and edge ticks are real geometry rather than decoration
- * faked with pseudo-elements.
+ * faked with pseudo-elements. The same outline doubles as the path a comet travels while
+ * the route behind the pane is loading.
  */
 export default function Pane({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
+  const { phase } = usePaneMotion();
+  const reduce = useReducedMotion();
+  const [morph, setMorph] = useState<Morph>(reduce ? "full" : "dot");
 
   useEffect(() => {
     const el = ref.current;
@@ -24,6 +43,37 @@ export default function Pane({ children }: { children: React.ReactNode }) {
     return () => ro.disconnect();
   }, []);
 
+  // Boot: dot -> line -> full, once, the moment the pane first exists. (Local state starts
+  // at "dot" already via useState above, so only the two later steps need scheduling.)
+  useEffect(() => {
+    if (phase !== "boot" || reduce) return;
+    const t1 = setTimeout(() => setMorph("line"), 140);
+    const t2 = setTimeout(() => setMorph("full"), 340);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [phase, reduce]);
+
+  // Sign-out / delete-account: full -> line, then hold there until the redirect lands.
+  useEffect(() => {
+    if (phase !== "collapsing" && phase !== "collapsed") return;
+    const id = setTimeout(() => setMorph("line"), 0);
+    return () => clearTimeout(id);
+  }, [phase]);
+
+  // The redirect landed on a new route while collapsed: line -> full again.
+  useEffect(() => {
+    if (phase !== "reopening") return;
+    const id0 = setTimeout(() => setMorph(reduce ? "full" : "line"), 0);
+    const id1 = reduce ? undefined : setTimeout(() => setMorph("full"), 40);
+    return () => {
+      clearTimeout(id0);
+      if (id1) clearTimeout(id1);
+    };
+  }, [phase, reduce]);
+
+  const full = morph === "full";
   const { w, h } = box;
   const c = 14; // corner cut, matches the clip-path
   const outline = w
@@ -33,16 +83,24 @@ export default function Pane({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="relative flex flex-1 flex-col">
-      <div ref={ref} className="pane flex flex-1 flex-col">
+      <motion.div
+        ref={ref}
+        className="pane flex flex-1 flex-col"
+        style={{ transformOrigin: "50% 50%", pointerEvents: full ? "auto" : "none" }}
+        animate={SCALE[morph]}
+        transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 260, damping: 28 }}
+      >
         {w > 0 && (
-          <svg
+          <motion.svg
             className="pane-edge"
             width={w}
             height={h}
             viewBox={`0 0 ${w} ${h}`}
             aria-hidden
+            animate={{ opacity: full ? 1 : 0 }}
+            transition={{ duration: reduce ? 0 : 0.2, delay: full && !reduce ? 0.05 : 0 }}
           >
-            {/* The frame traces itself in. */}
+            {/* The frame traces itself in, once, on boot. */}
             <path
               d={outline}
               className="boot-trace edge-glow"
@@ -52,11 +110,71 @@ export default function Pane({ children }: { children: React.ReactNode }) {
             />
             <Brackets w={w} h={h} c={c} />
             <Ticks w={w} h={h} />
-          </svg>
+            {phase === "loading" && (
+              <LoadingComet outline={outline} perimeter={perimeter} reduce={!!reduce} />
+            )}
+          </motion.svg>
         )}
-        <div className="relative z-1 flex flex-1 flex-col">{children}</div>
-      </div>
+        <motion.div
+          className="relative z-1 flex flex-1 flex-col"
+          animate={{ opacity: full ? 1 : 0 }}
+          transition={{ duration: reduce ? 0 : 0.22, delay: full && !reduce ? 0.06 : 0 }}
+        >
+          {children}
+        </motion.div>
+        {phase === "loading" && <LoadingOverlay />}
+      </motion.div>
     </div>
+  );
+}
+
+/** A bright dash chasing clockwise around the pane's own cut-corner outline. */
+function LoadingComet({
+  outline,
+  perimeter,
+  reduce,
+}: {
+  outline: string;
+  perimeter: number;
+  reduce: boolean;
+}) {
+  const dash = Math.min(90, perimeter * 0.06);
+  return (
+    <motion.path
+      d={outline}
+      fill="none"
+      stroke="var(--v-edge)"
+      strokeWidth={2}
+      strokeOpacity={0.9}
+      className="edge-glow"
+      strokeDasharray={`${dash} ${perimeter}`}
+      initial={{ strokeDashoffset: 0 }}
+      animate={reduce ? undefined : { strokeDashoffset: -perimeter }}
+      transition={{ duration: 1.7, repeat: Infinity, ease: "linear" }}
+    />
+  );
+}
+
+/** Center-of-page "loading" readout with a cycling ellipsis, shown while a route streams in. */
+function LoadingOverlay() {
+  const [dotCount, setDotCount] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setDotCount((n) => (n + 1) % 4), 350);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <motion.div
+      className="pointer-events-none absolute inset-0 z-2 flex items-center justify-center bg-void/50"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+    >
+      <p className="figure text-sm text-edge">
+        loading
+        <span className="inline-block w-4 text-left">{".".repeat(dotCount)}</span>
+      </p>
+    </motion.div>
   );
 }
 
