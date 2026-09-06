@@ -7,7 +7,6 @@ import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
 import type { CommitmentTrack } from "@prisma/client";
 import { completeOnboarding } from "@/app/actions/onboarding";
 import { CUSTOM_LIMITS } from "@/lib/constants";
-import { INSIGNIA_OPTIONS } from "@/lib/avatars";
 
 type ProblemSetOption = { id: string; key: string; name: string };
 
@@ -51,7 +50,6 @@ export default function OnboardingWizard({
  const [step, setStep] = useState(0);
  const [direction, setDirection] = useState(1);
  const [name, setName] = useState(initialName);
- const [image, setImage] = useState<string | null>(googleImage);
  const [track, setTrack] = useState<CommitmentTrack>("STANDARD");
  const [newTarget, setNewTarget] = useState(2);
  const [reviewTarget, setReviewTarget] = useState(1);
@@ -99,7 +97,7 @@ export default function OnboardingWizard({
  try {
  await completeOnboarding({
  name,
- image,
+ image: googleImage,
  track,
  customNewTarget: newTarget,
  customReviewTarget: reviewTarget,
@@ -159,14 +157,7 @@ export default function OnboardingWizard({
  exit="exit"
  >
  {step === 0 && (
- <StepProfile
- name={name}
- setName={setName}
- image={image}
- setImage={setImage}
- googleImage={googleImage}
- reduce={!!reduce}
- />
+ <StepProfile name={name} setName={setName} />
  )}
  {step === 1 && (
  <StepTrack
@@ -190,7 +181,7 @@ export default function OnboardingWizard({
  {isConfirm && (
  <Summary
  name={name}
- image={image}
+ image={googleImage}
  trackTitle={chosenTrack?.title ?? ""}
  trackBlurb={
  track === "CUSTOM"
@@ -252,17 +243,9 @@ function stagger(reduce: boolean, i: number) {
 function StepProfile({
  name,
  setName,
- image,
- setImage,
- googleImage,
- reduce,
 }: {
  name: string;
  setName: (v: string) => void;
- image: string | null;
- setImage: (v: string | null) => void;
- googleImage: string | null;
- reduce: boolean;
 }) {
  return (
  <div>
@@ -280,67 +263,7 @@ function StepProfile({
  className="w-full border border-hair bg-transparent px-3 py-2 ink outline-none focus:border-edge"
  />
  </label>
-
- <p className="mt-6 mb-2 text-xs ink-2">Avatar</p>
- <div className="flex flex-wrap gap-2">
- {googleImage && (
- <AvatarChoice
- selected={image === googleImage}
- onClick={() => setImage(googleImage)}
- transition={stagger(reduce, 0)}
- label="Google photo"
- >
- {/* Google's CDN is outside next/image's configured hosts, so a plain img. */}
- {/* eslint-disable-next-line @next/next/no-img-element */}
- <img src={googleImage} alt="" className="h-12 w-12 object-cover" />
- </AvatarChoice>
- )}
- {INSIGNIA_OPTIONS.map((opt, i) => (
- <AvatarChoice
- key={opt.rank}
- selected={image === opt.uri}
- onClick={() => setImage(opt.uri)}
- transition={stagger(reduce, i + (googleImage ? 1 : 0))}
- label={`${opt.rank}-Rank insignia`}
- >
- {/* eslint-disable-next-line @next/next/no-img-element */}
- <img src={opt.uri} alt="" className="h-12 w-12 " />
- </AvatarChoice>
- ))}
  </div>
- </div>
- );
-}
-
-function AvatarChoice({
- selected,
- onClick,
- children,
- transition,
- label,
-}: {
- selected: boolean;
- onClick: () => void;
- children: React.ReactNode;
- transition: object;
- label: string;
-}) {
- return (
- <motion.button
- type="button"
- onClick={onClick}
- aria-label={label}
- aria-pressed={selected}
- title={label}
- initial={{ opacity: 0, y: 8 }}
- animate={{ opacity: 1, y: 0 }}
- transition={transition}
- className={` border p-1 transition-colors duration-200 ${
- selected ? "border-edge bg-transparent" : "border-hair hover:border-hair"
- }`}
- >
- {children}
- </motion.button>
  );
 }
 
