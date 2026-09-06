@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect width="32" height="32" fill="#04070c"/>
+  <!--
+    The bolt from the wordmark, laid sideways. Drawn as geometry rather than the U+2301
+    glyph so it does not depend on a font, and stays legible at 16px.
+    A 24x24 bolt centred at (12,12), rotated 90° about the 32x32 centre.
+  -->
+  <g transform="translate(16 16) rotate(90) scale(1.05) translate(-12 -12)">
+    <path d="M13 2 L3 14 L11 14 L9 22 L19 10 L11 10 Z" fill="#7fefff" />
+  </g>
+</svg>
