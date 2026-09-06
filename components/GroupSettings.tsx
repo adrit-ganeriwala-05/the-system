@@ -141,17 +141,16 @@ export default function GroupSettings({
  <div className="mt-6 flex flex-wrap gap-3 border-t border-hair pt-4">
  {isOwner ? (
  <button
- disabled={pending}
- onClick={async () => {
- const ok = await confirm({
+ onClick={() =>
+ void confirm({
  title: "delete group",
  message: "All memberships are removed. This can't be undone.",
  confirmLabel: "delete",
  danger: true,
- });
- if (ok) run(() => deleteGroup(groupId));
- }}
- className="flex items-center gap-1.5 border border-bad px-3 py-2 text-xs text-bad hover:bg-transparent disabled:opacity-50"
+ action: () => deleteGroup(groupId),
+ })
+ }
+ className="flex items-center gap-1.5 border border-bad px-3 py-2 text-xs text-bad hover:bg-transparent"
  >
  <Trash2 className="h-3.5 w-3.5" />
  Delete group

@@ -240,6 +240,46 @@ body::after {
   filter: drop-shadow(var(--v-edge-glow));
 }
 
+/*
+ * Loading state for a box that already has its own border: rather than a spinner planted
+ * inside it, a bright arc of the border itself travels the full perimeter on a loop. The
+ * gradient is painted once and rotated via transform, so it animates smoothly without
+ * relying on @property support for animating the gradient angle directly.
+ */
+.loading-ring {
+  position: relative;
+}
+.loading-ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    transparent 260deg,
+    var(--v-edge) 300deg,
+    transparent 340deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: ring-spin 1.3s linear infinite;
+  pointer-events: none;
+}
+@keyframes ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-ring::before {
+    animation: none;
+  }
+}
+
 /* ---------- Boot sequence: the one orchestrated moment ---------- */
 
 .boot-trace {
