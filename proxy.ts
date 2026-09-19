@@ -9,7 +9,9 @@ import { NextResponse, type NextRequest } from "next/server";
 // boundary.
 const SESSION_COOKIES = ["authjs.session-token", "__Secure-authjs.session-token"];
 
-const PUBLIC_PATHS = ["/signin", "/api/auth"];
+// /api/cron routes carry their own Bearer-token check (see app/api/cron/keepalive) — Vercel
+// Cron invokes them with no session cookie at all, so they must bypass this gate entirely.
+const PUBLIC_PATHS = ["/signin", "/api/auth", "/api/cron"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
